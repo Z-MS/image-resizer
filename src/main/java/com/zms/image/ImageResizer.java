@@ -16,6 +16,11 @@ import org.imgscalr.Scalr;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
 public class ImageResizer extends Application {
     @Override
@@ -36,29 +41,36 @@ public class ImageResizer extends Application {
         Button pickFolderButton = new Button("Pick folder");
         pickFolderButton.setOnMouseClicked(e -> {
             folder = directoryChooser.showDialog(stage);
-        });
-
-        Button pickFileButton = new Button("Pick File");
-        pickFileButton.setOnMouseClicked(e -> {
-            file = fileChooser.showOpenDialog(stage);
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder.toPath())) {
+                for(Path file: stream) {
+                    // add file name to array
+                    files.add(file.toFile());
+                }
+            } catch (IOException | DirectoryIteratorException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         Button resizeButton = new Button("Resize");
         resizeButton.setOnMouseClicked(e -> {
             try {
 //                resizeImage(folder);
-                BufferedImage resizedImage = simpleResizeImage(ImageIO.read(file), 1000);
-                saveImage(resizedImage, "png", "beans");
+                // 3. Delete files without appendage in them 4.Rename files by removing appendage
+                for(File file: files) {
+                    BufferedImage resizedImage = simpleResizeImage(ImageIO.read(file), 1000);
+                    saveImage(resizedImage, "png", file.getName() + "_resized");
+                }
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         });
-        vbox.getChildren().addAll(pickFolderButton, pickFileButton, resizeButton);
+        vbox.getChildren().addAll(pickFolderButton, resizeButton);
         vbox.setAlignment(Pos.CENTER);
     }
 
     private static File folder;
-    private static File file;
+
+    private static ArrayList<File> files = new ArrayList<>();
     public static void main(String[] args) {
         launch();
     }
