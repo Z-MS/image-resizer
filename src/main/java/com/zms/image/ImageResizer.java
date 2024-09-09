@@ -4,18 +4,18 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.awt.image.BufferedImage;
+
+import org.imgscalr.Scalr;
+
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-
-import net.coobird.thumbnailator.*;
-import net.coobird.thumbnailator.builders.BufferedImageBuilder;
-import net.coobird.thumbnailator.name.Rename;
 
 public class ImageResizer extends Application {
     @Override
@@ -30,32 +30,53 @@ public class ImageResizer extends Application {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures"));
 
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures"));
+
         Button pickFolderButton = new Button("Pick folder");
         pickFolderButton.setOnMouseClicked(e -> {
             folder = directoryChooser.showDialog(stage);
         });
 
+        Button pickFileButton = new Button("Pick File");
+        pickFileButton.setOnMouseClicked(e -> {
+            file = fileChooser.showOpenDialog(stage);
+        });
+
         Button resizeButton = new Button("Resize");
         resizeButton.setOnMouseClicked(e -> {
             try {
-                resizeImage(folder);
+//                resizeImage(folder);
+                BufferedImage resizedImage = simpleResizeImage(ImageIO.read(file), 1000);
+                saveImage(resizedImage, "png", "beans");
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         });
-        vbox.getChildren().addAll(pickFolderButton, resizeButton);
+        vbox.getChildren().addAll(pickFolderButton, pickFileButton, resizeButton);
         vbox.setAlignment(Pos.CENTER);
     }
 
     private static File folder;
+    private static File file;
     public static void main(String[] args) {
         launch();
     }
 
-    public static void resizeImage(File directory) throws IOException {
-        Thumbnails.of(directory.listFiles())
-                .size(1000, 300)
-                .outputFormat("jpg")
-                .toFiles(Rename.SUFFIX_DOT_THUMBNAIL);
+    BufferedImage simpleResizeImage(BufferedImage originalImage, int targetWidth) throws IOException {
+        return Scalr.resize(originalImage, targetWidth);
     }
+
+    void saveImage(BufferedImage image, String formatName, String filename) {
+        try {
+            File outputFile = new File( "C:/Users/zayya/Pictures/" + filename + "." + formatName);
+            ImageIO.write(image, formatName, outputFile);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    public static void resizeImage(File directory) throws IOException {
+
+    }
+
 }
