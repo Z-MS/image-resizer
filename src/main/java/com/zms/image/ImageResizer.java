@@ -32,24 +32,23 @@ public class ImageResizer extends Application {
         VBox vbox = new VBox();
 
         Scene scene = new Scene(vbox, 320, 240);
-        stage.setTitle("Hello!");
+        stage.setTitle("Image Resizer");
         stage.setScene(scene);
         stage.show();
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures"));
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures"));
+        directoryChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures/AI"));
 
         Button pickFolderButton = new Button("Pick folder");
+        Button resizeButton = new Button("Resize");
+
         pickFolderButton.setOnMouseClicked(e -> {
             folder = directoryChooser.showDialog(stage);
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder.toPath())) {
                 for(Path file: stream) {
                     // check if image's width is > 1000. If so, add to files array
                     File imageFile = file.toFile();
-                    if(getWidth(imageFile) < 1000) {
+                    if(getWidth(imageFile) > 1000) {
                         // add file to array
                         files.add(imageFile);
                     }
@@ -59,21 +58,26 @@ public class ImageResizer extends Application {
             }
         });
 
-        Button resizeButton = new Button("Resize");
         resizeButton.setOnMouseClicked(e -> {
             try {
-//                resizeImage(folder);
-                // 3. Delete files without appendage in them 4.Rename files by removing appendage
                 for(File file: files) {
                     BufferedImage resizedImage = simpleResizeImage(ImageIO.read(file), 1000);
                     String fullFilename = file.getName();
+
+                    // delete original file
+                    if(deleteOriginalImage(file)) {
+                        System.out.println("File deleted");
+                    }
+
+                    // save images. this might be dangerous because the files are only in memory at this point. I think
                     String filenameWithoutExtension = fullFilename.substring(0, fullFilename.indexOf('.'));
-                    saveImage(resizedImage, filenameWithoutExtension + "_resized");
+                    saveImage(resizedImage, filenameWithoutExtension);
                 }
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         });
+
         vbox.getChildren().addAll(pickFolderButton, resizeButton);
         vbox.setAlignment(Pos.CENTER);
     }
@@ -91,7 +95,7 @@ public class ImageResizer extends Application {
 
     void saveImage(BufferedImage image, String filename) {
         try {
-            File outputFile = new File( "C:/Users/zayya/Pictures/AI/" + filename + ".png");
+            File outputFile = new File( "C:/Users/zayya/Pictures/AI/Test/" + filename + ".png");
             ImageIO.write(image, "png", outputFile);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -114,6 +118,10 @@ public class ImageResizer extends Application {
             throw new NoSuchElementException("No PNG reader found");
         }
         return width;
+    }
+
+    static boolean deleteOriginalImage(File file) throws IOException {
+        return file.delete();
     }
 
 }
