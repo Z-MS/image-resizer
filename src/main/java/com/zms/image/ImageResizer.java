@@ -37,13 +37,15 @@ public class ImageResizer extends Application {
         stage.show();
 
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures/AI"));
+        directoryChooser.setInitialDirectory(new File("C:/Users/zayya/Pictures/AI/Test/"));
 
         Button pickFolderButton = new Button("Pick folder");
         Button resizeButton = new Button("Resize");
+        Button renameButton = new Button("Rename");
 
         pickFolderButton.setOnMouseClicked(e -> {
             folder = directoryChooser.showDialog(stage);
+
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder.toPath())) {
                 for(Path file: stream) {
                     // check if image's width is > 1000. If so, add to files array
@@ -61,6 +63,7 @@ public class ImageResizer extends Application {
         resizeButton.setOnMouseClicked(e -> {
             try {
                 for(File file: files) {
+                    // resize image
                     BufferedImage resizedImage = simpleResizeImage(ImageIO.read(file), 1000);
                     String fullFilename = file.getName();
 
@@ -69,16 +72,34 @@ public class ImageResizer extends Application {
                         System.out.println("File deleted");
                     }
 
-                    // save images. this might be dangerous because the files are only in memory at this point. I think
-                    String filenameWithoutExtension = fullFilename.substring(0, fullFilename.indexOf('.'));
-                    saveImage(resizedImage, filenameWithoutExtension);
+                    String imageFilename = fullFilename.substring(0, fullFilename.indexOf('.'));
+                    System.out.println(folder.getPath() + "/" + imageFilename + ".png");
+                    saveImage(resizedImage, imageFilename);
                 }
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         });
 
-        vbox.getChildren().addAll(pickFolderButton, resizeButton);
+        /*renameButton.setOnMouseClicked(e -> {
+            try(DirectoryStream<Path> stream = Files.newDirectoryStream(folder.toPath())) {
+                // get the images in folder and rename (remove "resized))
+                for(Path path: stream) {
+                    File imageFile = path.toFile();
+                    String fileName = imageFile.getName();
+                    if(fileName.contains("resized_")) {
+                        // remove "resized_" from file name
+                        File outputDir = new File(directoryChooser.getInitialDirectory().getName() + "/" + fileName.substring(fileName.indexOf("_") + 1));
+                        System.out.println(outputDir);
+                        // imageFile.renameTo();
+                    }
+                }
+            } catch (IOException | DirectoryIteratorException ex) {
+                throw new RuntimeException(ex);
+            }
+        });*/
+
+        vbox.getChildren().addAll(pickFolderButton, resizeButton, renameButton);
         vbox.setAlignment(Pos.CENTER);
     }
 
@@ -95,7 +116,9 @@ public class ImageResizer extends Application {
 
     void saveImage(BufferedImage image, String filename) {
         try {
-            File outputFile = new File( "C:/Users/zayya/Pictures/AI/Test/" + filename + ".png");
+            // get selected folder
+            String outputDir = folder.getPath() + "\\";
+            File outputFile = new File(outputDir + filename + ".png");
             ImageIO.write(image, "png", outputFile);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
